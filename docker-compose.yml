@@ -17,6 +17,8 @@ services:
       - GOOGLE_SHEETS_CREDENTIALS_JSON=${GOOGLE_SHEETS_CREDENTIALS_JSON}
       # Variable para Cloudinary (imágenes)
       - CLOUDINARY_URL=${CLOUDINARY_URL}
+      # Llave privada de QZ Tray para firmar peticiones
+      - QZ_PRIVATE_KEY=${QZ_PRIVATE_KEY}
     volumes:
       # Usaremos un volumen nombrado para mayor flexibilidad en producción
       - pedidospro_data:/app/data

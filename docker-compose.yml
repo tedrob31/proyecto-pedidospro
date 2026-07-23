@@ -13,8 +13,10 @@ services:
       # Cargar de variables de entorno del host o .env (importante que se cree el .env en el VPS)
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-123456}
       - JWT_SECRET=${JWT_SECRET:-secretito_muy_seguro_pedidos_pro}
-      # Ruta de credenciales mapeada a través del volumen
+      # Ruta o contenido en crudo de credenciales (tomado del .env del VPS)
       - GOOGLE_SHEETS_CREDENTIALS_JSON=${GOOGLE_SHEETS_CREDENTIALS_JSON}
+      # Variable para Cloudinary (imágenes)
+      - CLOUDINARY_URL=${CLOUDINARY_URL}
     volumes:
       # Usaremos un volumen nombrado para mayor flexibilidad en producción
       - pedidospro_data:/app/data

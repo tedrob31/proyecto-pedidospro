@@ -1,0 +1,51 @@
+version: "3.7"
+services:
+  pedidospro:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/tedrob31/pedidospro:latest
+    networks:
+      - r4tlabsnet
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      # Cargar de variables de entorno del host o .env (importante que se cree el .env en el VPS)
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-123456}
+      - JWT_SECRET=${JWT_SECRET:-secretito_muy_seguro_pedidos_pro}
+      # Ruta de credenciales mapeada a través del volumen
+      - GOOGLE_SHEETS_CREDENTIALS_JSON=${GOOGLE_SHEETS_CREDENTIALS_JSON}
+    volumes:
+      # Mapeamos la carpeta data para no perder la BD ni las credenciales (si usaras JSON en disco)
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/proveedores"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=r4tlabsnet
+        
+        # Router unificado para TODO el tráfico web de Next.js
+        - "traefik.http.routers.pedidospro.rule=Host(`pedidospro.r4tlabs.com`) || Host(`www.pedidospro.r4tlabs.com`)"
+        - "traefik.http.routers.pedidospro.entrypoints=websecure"
+        - "traefik.http.routers.pedidospro.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.pedidospro.service=pedidospro-service"
+        - "traefik.http.services.pedidospro-service.loadbalancer.server.port=3000"
+
+networks:
+  r4tlabsnet:
+    external: true
+    name: r4tlabsnet

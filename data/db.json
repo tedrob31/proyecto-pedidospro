@@ -1,0 +1,31 @@
+{
+  "settings": {
+    "columns_mapping": {
+      "proveedor": "PROVEEDOR",
+      "hojas": "HOJAS",
+      "codigo": "CODIGO",
+      "url_foto": "URL_FOTO"
+    },
+    "pedido_columns": [
+      "PEDIDO1",
+      "PEDIDO2",
+      "PEDIDO3"
+    ],
+    "google_sheets": {
+      "sheet_id_proveedores": "1x-pvKl-qTmHT7f_28rLNziwPo5ScmE18lMMT5vP9jTQ",
+      "sheet_id_stock": "1bgDGSbo84MIefCpKf9FuCbuuiRFipERxmNmRCFLad6c"
+    },
+    "cloudinary": {
+      "base_width": 800,
+      "text_color": "FFFFFF",
+      "text_bg_color": "000000AA",
+      "font_size": 70,
+      "quality": "auto:good"
+    },
+    "printer": {
+      "name": "TSC TE200",
+      "symbol": ",",
+      "includeQR": false
+    }
+  }
+}

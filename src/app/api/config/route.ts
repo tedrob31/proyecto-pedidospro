@@ -9,7 +9,30 @@ export async function GET() {
     const data = await fs.readFile(dbPath, 'utf8');
     return NextResponse.json(JSON.parse(data));
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to read config' }, { status: 500 });
+    // Si no existe, devolvemos un objeto por defecto
+    const defaultData = {
+      settings: {
+        columns_mapping: {
+          proveedor: "PROVEEDOR",
+          hojas: "HOJAS",
+          codigo: "CODIGO",
+          url_foto: "URL_FOTO"
+        },
+        pedido_columns: ["PEDIDO1", "PEDIDO2", "PEDIDO3"],
+        google_sheets: {
+          sheet_id_proveedores: "",
+          sheet_id_stock: ""
+        },
+        cloudinary: {
+          base_width: 800,
+          text_color: "FFFFFF",
+          text_bg_color: "000000AA",
+          font_size: 70,
+          quality: "auto:good"
+        }
+      }
+    };
+    return NextResponse.json(defaultData);
   }
 }
 

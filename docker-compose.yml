@@ -4,7 +4,7 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile
-    image: ghcr.io/tedrob31/pedidospro:latest
+    image: ghcr.io/tedrob31/proyecto-pedidospro:latest
     networks:
       - r4tlabsnet
     environment:
@@ -16,8 +16,8 @@ services:
       # Ruta de credenciales mapeada a través del volumen
       - GOOGLE_SHEETS_CREDENTIALS_JSON=${GOOGLE_SHEETS_CREDENTIALS_JSON}
     volumes:
-      # Mapeamos la carpeta data para no perder la BD ni las credenciales (si usaras JSON en disco)
-      - ./data:/app/data
+      # Usaremos un volumen nombrado para mayor flexibilidad en producción
+      - pedidospro_data:/app/data
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/proveedores"]
       interval: 30s
@@ -49,3 +49,7 @@ networks:
   r4tlabsnet:
     external: true
     name: r4tlabsnet
+
+volumes:
+  pedidospro_data:
+    name: pedidospro_data

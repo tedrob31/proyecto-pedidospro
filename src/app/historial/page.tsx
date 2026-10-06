@@ -7,6 +7,7 @@ export default function HistorialPage() {
   const [historial, setHistorial] = useState<HistorialPedido[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [previewImage, setPreviewImage] = useState<{ url: string; codigo: string } | null>(null);
 
@@ -123,7 +124,34 @@ export default function HistorialPage() {
       .join(' | ');
   };
 
+  const getFirstProvName = (pedido: HistorialPedido) => {
+    return (pedido.proveedores?.[0]?.proveedor || '').toLowerCase();
+  };
+
+  const getPedidosFiltradosYOrdenados = (pedidos: HistorialPedido[]) => {
+    const q = searchQuery.trim().toLowerCase();
+    return pedidos
+      .filter(pedido => {
+        if (!q) return true;
+        return pedido.proveedores?.some(p => 
+          (p.proveedor || '').toLowerCase().includes(q) ||
+          (p.results || []).some((r: any) => (r.codigo || '').toLowerCase().includes(q))
+        );
+      })
+      .sort((a, b) => {
+        const nameA = getFirstProvName(a);
+        const nameB = getFirstProvName(b);
+        return nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+      });
+  };
+
   const datesToShow = selectedDate === 'all' ? availableDates : [selectedDate];
+
+  // Identificar los días que tienen pedidos después de aplicar el filtro de búsqueda
+  const daysWithResults = datesToShow.filter(dateStr => {
+    const pedidos = getPedidosFiltradosYOrdenados(groupedByDate[dateStr] || []);
+    return pedidos.length > 0;
+  });
 
   if (loading) return <div className="p-10 text-white">Cargando historial...</div>;
 
@@ -136,18 +164,48 @@ export default function HistorialPage() {
         </div>
         
         {availableDates.length > 0 && (
-          <div className="flex gap-4 items-center">
-            <label className="text-sm text-gray-400">Filtrar por día:</label>
-            <select 
-              value={selectedDate} 
-              onChange={e => setSelectedDate(e.target.value)}
-              className="bg-gray-900 border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
-            >
-              <option value="all">Todos los días</option>
-              {availableDates.map(d => (
-                <option key={d} value={d}>{getDayName(d)} ({d})</option>
-              ))}
-            </select>
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center w-full sm:w-auto">
+            {/* Buscador de Proveedor */}
+            <div className="relative flex-1 sm:w-64">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+              </div>
+              <input 
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Buscar proveedor..."
+                className="bg-gray-900 border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-9 pr-8 p-2.5 placeholder-gray-500"
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-gray-400 hover:text-white"
+                  title="Limpiar búsqueda"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Selector de Día */}
+            <div className="flex gap-2 items-center">
+              <label className="text-sm text-gray-400 whitespace-nowrap">Día:</label>
+              <select 
+                value={selectedDate} 
+                onChange={e => setSelectedDate(e.target.value)}
+                className="bg-gray-900 border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
+              >
+                <option value="all">Todos los días</option>
+                {availableDates.map(d => (
+                  <option key={d} value={d}>{getDayName(d)} ({d})</option>
+                ))}
+              </select>
+            </div>
           </div>
         )}
       </div>
@@ -156,26 +214,32 @@ export default function HistorialPage() {
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
           <p className="text-gray-400">No hay historial de pedidos guardado.</p>
         </div>
+      ) : daysWithResults.length === 0 ? (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
+          <p className="text-gray-400">No se encontraron pedidos que coincidan con &quot;{searchQuery}&quot;.</p>
+        </div>
       ) : (
         <div className="space-y-12">
-          {datesToShow.map(dateStr => (
-            <div key={dateStr} className="space-y-4">
-              <div className="flex items-center justify-between border-b border-gray-800 pb-2">
-                <h2 className="text-xl font-bold text-blue-400 flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                  {getDayName(dateStr)} <span className="text-sm text-gray-500 font-normal">({dateStr})</span>
-                </h2>
-                <button 
-                  onClick={() => deleteByDate(dateStr)}
-                  className="text-xs bg-red-900/50 hover:bg-red-900 text-red-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                  Limpiar Día
-                </button>
-              </div>
+          {daysWithResults.map(dateStr => {
+            const pedidosDelDia = getPedidosFiltradosYOrdenados(groupedByDate[dateStr] || []);
+            return (
+              <div key={dateStr} className="space-y-4">
+                <div className="flex items-center justify-between border-b border-gray-800 pb-2">
+                  <h2 className="text-xl font-bold text-blue-400 flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    {getDayName(dateStr)} <span className="text-sm text-gray-500 font-normal">({dateStr}) - {pedidosDelDia.length} {pedidosDelDia.length === 1 ? 'pedido' : 'pedidos'}</span>
+                  </h2>
+                  <button 
+                    onClick={() => deleteByDate(dateStr)}
+                    className="text-xs bg-red-900/50 hover:bg-red-900 text-red-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Limpiar Día
+                  </button>
+                </div>
 
-              <div className="space-y-4">
-                {groupedByDate[dateStr].map(pedido => (
+                <div className="space-y-4">
+                  {pedidosDelDia.map(pedido => (
                   <div key={pedido.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
                     <div className="p-4 bg-gray-800/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                       <div>
@@ -264,9 +328,10 @@ export default function HistorialPage() {
                 ))}
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
+    )}
 
       {/* Modal Vista Previa Imagen (Ojito) */}
       {previewImage && (

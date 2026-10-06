@@ -208,6 +208,33 @@ export default function PedidosPage() {
     alert('¡Lista de resumen copiada!');
   };
 
+  const saveHistory = async (provNames: string[]) => {
+    const provsToSave = providerResults.filter(p => provNames.includes(p.proveedor) && p.success && p.results.length > 0);
+    if (provsToSave.length === 0) return;
+    
+    try {
+      setLoading(true);
+      const res = await fetch('/api/historial', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          columna: selectedColumn,
+          proveedores: provsToSave
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('¡Pedido guardado en el historial con éxito!');
+      } else {
+        alert('Error al guardar: ' + data.error);
+      }
+    } catch (err: any) {
+      alert('Error de red al guardar en el historial.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!config) return <div className="p-10 text-white">Cargando...</div>;
 
   return (
@@ -308,6 +335,14 @@ export default function PedidosPage() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                   Imprimir Etiquetas
                 </button>
+                <button 
+                  onClick={() => saveHistory(selectedResultProvs)}
+                  disabled={loading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 text-sm"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                  Guardar
+                </button>
               </div>
             )}
           </div>
@@ -357,6 +392,14 @@ export default function PedidosPage() {
                         title="Imprimir Etiquetas"
                       >
                         Imprimir
+                      </button>
+                      <button 
+                        onClick={() => saveHistory([provData.proveedor])}
+                        disabled={loading}
+                        className="bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded-lg text-sm transition-colors disabled:opacity-50"
+                        title="Guardar en Historial"
+                      >
+                        Guardar
                       </button>
                     </>
                   )}

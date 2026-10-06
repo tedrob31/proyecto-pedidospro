@@ -13,6 +13,7 @@ export default function Navbar() {
     { href: '/pedidos', label: 'Procesar Pedidos' },
     { href: '/subir-fotos', label: 'Subir Fotos' },
     { href: '/proveedores', label: 'Proveedores' },
+    { href: '/historial', label: 'Historial' },
     { href: '/configuracion', label: 'Configuración' },
   ];
 

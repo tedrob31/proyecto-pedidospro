@@ -6,7 +6,7 @@ export default function Dashboard() {
         <p className="mt-2 text-sm text-gray-400">Bienvenido al Sistema de Gestión de Pedidos e Imágenes.</p>
       </div>
       
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {/* Card 1 */}
         <div className="bg-gray-900 overflow-hidden shadow rounded-xl border border-gray-800 transition-all hover:border-gray-700">
           <div className="p-6">
@@ -87,6 +87,34 @@ export default function Dashboard() {
             <div className="text-sm">
               <a href="/configuracion" className="font-medium text-blue-500 hover:text-blue-400 transition-colors">
                 Ir a configuración &rarr;
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4 */}
+        <div className="bg-gray-900 overflow-hidden shadow rounded-xl border border-gray-800 transition-all hover:border-gray-700">
+          <div className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 bg-yellow-500/10 rounded-md p-3">
+                <svg className="h-6 w-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-400 truncate">Historial</dt>
+                  <dd className="flex items-baseline">
+                    <div className="text-2xl font-semibold text-white">Pedidos Guardados</div>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-950/50 px-6 py-3 border-t border-gray-800">
+            <div className="text-sm">
+              <a href="/historial" className="font-medium text-blue-500 hover:text-blue-400 transition-colors">
+                Ir a historial &rarr;
               </a>
             </div>
           </div>

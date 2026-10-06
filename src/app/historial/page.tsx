@@ -8,9 +8,16 @@ export default function HistorialPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>('all');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [previewImage, setPreviewImage] = useState<{ url: string; codigo: string } | null>(null);
 
   useEffect(() => {
     fetchHistorial();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPreviewImage(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const fetchHistorial = async () => {
@@ -103,6 +110,19 @@ export default function HistorialPage() {
     return dateStr;
   };
 
+  const getTituloPedido = (pedido: HistorialPedido) => {
+    if (!pedido.proveedores || pedido.proveedores.length === 0) {
+      return 'Sin proveedores';
+    }
+    return pedido.proveedores
+      .map(p => {
+        const nombre = (p.proveedor || '').toUpperCase();
+        const cant = Array.isArray(p.summary) ? p.summary.length : (Array.isArray(p.results) ? p.results.length : 0);
+        return `${nombre} ${cant} ${cant === 1 ? 'PRENDA' : 'PRENDAS'}`;
+      })
+      .join(' | ');
+  };
+
   const datesToShow = selectedDate === 'all' ? availableDates : [selectedDate];
 
   if (loading) return <div className="p-10 text-white">Cargando historial...</div>;
@@ -119,7 +139,7 @@ export default function HistorialPage() {
           <div className="flex gap-4 items-center">
             <label className="text-sm text-gray-400">Filtrar por día:</label>
             <select 
-              value={selectedDate}
+              value={selectedDate} 
               onChange={e => setSelectedDate(e.target.value)}
               className="bg-gray-900 border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
             >
@@ -163,7 +183,9 @@ export default function HistorialPage() {
                           <span className="text-sm text-gray-400">{new Date(pedido.fecha).toLocaleTimeString()}</span>
                           <span className="bg-blue-900/50 text-blue-300 text-xs px-2 py-0.5 rounded border border-blue-800">{pedido.columna}</span>
                         </div>
-                        <h3 className="font-semibold text-white">Lote de {pedido.proveedores.length} proveedores</h3>
+                        <h3 className="font-semibold text-white text-base">
+                          {getTituloPedido(pedido)}
+                        </h3>
                       </div>
                       
                       <div className="flex items-center gap-2">
@@ -191,7 +213,7 @@ export default function HistorialPage() {
                             <h4 className="font-bold text-white mb-3 flex items-center justify-between border-b border-gray-800/50 pb-2">
                               <span>{provData.proveedor}</span>
                               <span className="text-xs text-green-400 font-normal bg-green-900/20 px-2 py-1 rounded">
-                                {provData.results.length} fotos, {provData.summary.length} etiquetas
+                                {provData.results?.length || 0} fotos, {provData.summary?.length || 0} etiquetas
                               </span>
                             </h4>
                             
@@ -199,21 +221,32 @@ export default function HistorialPage() {
                               <div className="md:col-span-1">
                                 <h5 className="text-xs text-gray-400 uppercase font-semibold mb-2">Resumen TSPL</h5>
                                 <div className="bg-black/50 p-3 rounded font-mono text-xs text-gray-400 max-h-48 overflow-y-auto whitespace-pre border border-gray-900">
-                                  {provData.summary.join('\n')}
+                                  {(provData.summary || []).join('\n')}
                                 </div>
                               </div>
                               <div className="md:col-span-3">
                                 <h5 className="text-xs text-gray-400 uppercase font-semibold mb-2">Imágenes Solicitadas</h5>
                                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-                                  {provData.results.map((r: any, i: number) => (
-                                    <div key={i} className="bg-black/50 border border-gray-900 rounded overflow-hidden">
-                                      <div className="aspect-square relative p-1">
+                                  {(provData.results || []).map((r: any, i: number) => (
+                                    <div key={i} className="bg-black/50 border border-gray-900 rounded overflow-hidden group">
+                                      <div className="aspect-square relative p-1 flex items-center justify-center">
                                         <img 
                                           src={r.urlTransformada} 
                                           alt={r.codigo} 
-                                          className="w-full h-full object-contain"
+                                          className="w-full h-full object-contain cursor-pointer"
                                           loading="lazy"
+                                          onClick={() => setPreviewImage({ url: r.urlTransformada, codigo: r.codigo })}
                                         />
+                                        <button 
+                                          onClick={() => setPreviewImage({ url: r.urlTransformada, codigo: r.codigo })}
+                                          className="absolute top-2 right-2 bg-black/75 hover:bg-blue-600 text-white p-1.5 rounded-full shadow opacity-70 group-hover:opacity-100 transition-all hover:scale-110"
+                                          title="Ver en grande"
+                                        >
+                                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                          </svg>
+                                        </button>
                                       </div>
                                       <div className="p-1 border-t border-gray-900 text-center bg-gray-900/50">
                                         <p className="text-[10px] font-mono text-gray-300 truncate">{r.codigo}</p>
@@ -232,6 +265,42 @@ export default function HistorialPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal Vista Previa Imagen (Ojito) */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div 
+            className="relative max-w-2xl w-full bg-gray-900 border border-gray-700 rounded-2xl overflow-hidden shadow-2xl flex flex-col items-center p-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="w-full flex justify-between items-center mb-3 px-2">
+              <span className="font-mono text-sm font-bold text-white bg-gray-800 px-3 py-1 rounded-lg border border-gray-700">
+                {previewImage.codigo}
+              </span>
+              <button 
+                onClick={() => setPreviewImage(null)}
+                className="text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 p-1.5 rounded-lg transition-colors"
+                title="Cerrar (Esc)"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="w-full flex items-center justify-center bg-black/70 rounded-xl p-2 max-h-[75vh] overflow-hidden">
+              <img 
+                src={previewImage.url} 
+                alt={previewImage.codigo} 
+                className="max-h-[72vh] max-w-full object-contain rounded"
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>

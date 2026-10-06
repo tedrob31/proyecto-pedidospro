@@ -30,7 +30,16 @@ export default function PedidosPage() {
   const [showProvMenu, setShowProvMenu] = useState(false);
   
   const [copiedItems, setCopiedItems] = useState<Set<string>>(new Set());
+  const [previewImage, setPreviewImage] = useState<{ url: string; codigo: string } | null>(null);
   
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPreviewImage(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   useEffect(() => {
     Promise.all([
       fetch('/api/proveedores').then(r => r.json()),
@@ -451,11 +460,22 @@ export default function PedidosPage() {
                                 <img 
                                   src={r.urlTransformada} 
                                   alt={`Pedido ${r.codigo}`} 
-                                  className="w-full h-full object-contain p-2"
+                                  className="w-full h-full object-contain p-2 cursor-pointer"
                                   crossOrigin="anonymous"
                                   loading="lazy"
+                                  onClick={() => setPreviewImage({ url: r.urlTransformada, codigo: r.codigo })}
                                 />
-                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
+                                  <button 
+                                    onClick={() => setPreviewImage({ url: r.urlTransformada, codigo: r.codigo })} 
+                                    className="bg-gray-800 hover:bg-blue-600 text-white p-2 rounded-lg transition-colors"
+                                    title="Ver en grande"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                  </button>
                                   <button onClick={() => copyImage(r.urlTransformada, idxKey)} className={`${isCopied ? 'bg-green-600' : 'bg-blue-600'} text-white text-xs px-3 py-1.5 rounded-lg`}>
                                     {isCopied ? 'Copiada' : 'Copiar'}
                                   </button>
@@ -475,6 +495,42 @@ export default function PedidosPage() {
             </div>
           ))}
 
+        </div>
+      )}
+
+      {/* Modal Vista Previa Imagen (Ojito) */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div 
+            className="relative max-w-2xl w-full bg-gray-900 border border-gray-700 rounded-2xl overflow-hidden shadow-2xl flex flex-col items-center p-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="w-full flex justify-between items-center mb-3 px-2">
+              <span className="font-mono text-sm font-bold text-white bg-gray-800 px-3 py-1 rounded-lg border border-gray-700">
+                {previewImage.codigo}
+              </span>
+              <button 
+                onClick={() => setPreviewImage(null)}
+                className="text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 p-1.5 rounded-lg transition-colors"
+                title="Cerrar (Esc)"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="w-full flex items-center justify-center bg-black/70 rounded-xl p-2 max-h-[75vh] overflow-hidden">
+              <img 
+                src={previewImage.url} 
+                alt={previewImage.codigo} 
+                className="max-h-[72vh] max-w-full object-contain rounded"
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>
